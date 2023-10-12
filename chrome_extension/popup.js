@@ -40,9 +40,6 @@ chrome.history.search(
             chrome.history.getVisits({url: url}, processVisitsWithUrl(url));
             numRequestsOutstanding++;
         }
-        if (!numRequestsOutstanding) {
-            onAllVisitsProcessed();
-        }
     }
 );
 class urlNode {
@@ -72,27 +69,30 @@ const generateNodes = function (visitItems) {
     let urlNodes = new Array();
     for (let i = 0; i < visitItems.length; ++i) {
         if (visitItems[i].transition != 'link') {
-            newNode = urlNode(visitItems[i].url, visitItems[i].title, visitItems[i].visitTime); 
-            urlNodes.append(newNode);
+            let newNode = new urlNode(visitItems[i].url, visitItems[i].title, visitItems[i].visitTime); 
+            urlNodes.push(newNode);
         }
         else{
-            newNode = urlNode(visitItems[i].url, visitItems[i].title, visitItems[i].visitTime); 
+            let newNode = new urlNode(visitItems[i].url, visitItems[i].title, visitItems[i].visitTime); 
             
-            prevVisitId = visitItems[i].referringVisitId;
-            chrome.history.getVisitItems({visitId: prevVisitId}, function(visitItems) {
+            let prevVisitId = visitItems[i].referringVisitId;
+            /*
+            chrome.history.getVisits({url: prevVisitId}, function(visitItems) {
                 if (visitItems.length > 0) {
                     newNode.setPreviousUrl(visitItems[0].url);
                 }
+            urlNodes.push(newNode);
             });
+            */
         }  
     }
 
     // If this is the final outstanding call to processVisits(),
     // then we have the final results.  Use them to build the list
     // of URLs to show in the popup.
-    if (!--numRequestsOutstanding) {
-        onAllVisitsProcessed();
-    }
+    urlNodes.forEach(element => {
+        console.log(element.title);
+    });
 };
 
 

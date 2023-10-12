@@ -7,6 +7,10 @@
         "default_popup": "popup.html"
       },
 
+      "background": {
+        "scripts": ["background.js"]
+      },
+
       "host_permissions": [
         "https://developer.chrome.com/*"
       ],
