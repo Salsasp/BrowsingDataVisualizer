@@ -1,8 +1,11 @@
 console.log("background.js loaded");
+//globals
 var sessionBegin, sessionEnd, sessionTotal;
 var sessionComplete = false, switchState = false;
 var sessionHistoryItems, sessionVisitItems = [];
+let visitToHistoryMap = new Map();
 
+//switch listener from popup.js
 chrome.runtime.onMessage.addListener(function(message){
     if(message.switchEnabled){
         sessionBegin = Date.now();
@@ -45,10 +48,9 @@ chrome.runtime.onMessage.addListener(function(message){
         const generateNodes = function (historyItems) {
             console.log("generateNodes called")
             let urlNodes = new Array();
-            let visitToHistoryMap = new Map();
             historyItems.forEach(item => {
                 console.log("in history items loop")
-                chrome.history.getVisits({url: item.url}), function(visits){     
+                chrome.history.getVisits({url: item.url}, function(visits){     
                     console.log("visits size: " + visits.length)  
                     visits.forEach(visit => {
                         console.log("in visits loop")
@@ -57,18 +59,18 @@ chrome.runtime.onMessage.addListener(function(message){
                         let tempNode = new urlNode(item.url, visit.visitTime, item.title, getPreviousUrl(visit));
                         urlNodes.push(tempNode);
                     });
-                }
-            });
+                });
             urlNodes.forEach(element => { //debugging
                 console.log(element.title);
             });
-        };
+        });
+    }
 
         function getPreviousUrl(visit) {
             console.log("getPreviousUrl called")
             console.log("transition: " + visit.transition)
             console.log("referringVisitId: " + visit.referringVisitId)
-            if(visit.transition != link || visit.referringVisitId == null){
+            if(visit.transition != 'link' || visit.referringVisitId == null){
                 return [];
             }
             correspondingHistoryItem = visitToHistoryMap.get(visit);
@@ -87,3 +89,7 @@ chrome.runtime.onMessage.addListener(function(message){
         }
     }
 });
+
+//CURRENT ISSUE: visits retrieved from chrome.history.getVisits() are from the ENTIRE history, and not within the session time
+//this can likely be solved by checking for a valid time of each visit retrieved. There is likely a lot a redundancy in this code
+//so it can be optimized later.
