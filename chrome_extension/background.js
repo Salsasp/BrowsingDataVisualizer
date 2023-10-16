@@ -3,7 +3,8 @@ console.log("background.js loaded");
 var sessionBegin, sessionEnd, sessionTotal;
 var sessionComplete = false, switchState = false;
 var sessionHistoryItems, sessionVisitItems = [];
-let visitToHistoryMap = new Map();
+var urlNodes = [];
+var visitToHistoryMap = new Map();
 
 //switch listener from popup.js
 chrome.runtime.onMessage.addListener(function(message){
@@ -35,34 +36,25 @@ chrome.runtime.onMessage.addListener(function(message){
                 }
             }
         );
-        class urlNode {
-            constructor(url, visitTime, title, previousUrls) {
-                this.url = url;
-                this.visitTime = visitTime;
-                this.title = title;
-                this.previousUrl = previousUrls;
-            }
-        }
 
 
         const generateNodes = function (historyItems) {
             console.log("generateNodes called")
-            let urlNodes = new Array();
             historyItems.forEach(item => {
                 console.log("in history items loop")
                 chrome.history.getVisits({url: item.url}, function(visits){     
                     console.log("visits size: " + visits.length)  
                     visits.forEach(visit => {
                         console.log("in visits loop")
-                        visitToHistoryMap.set(visit, item); //for quick access between historyItem properties and visit properties
-                        sessionVisitItems.push(visit); //pushes all visits into sessionVisitItems
-                        let tempNode = new urlNode(item.url, visit.visitTime, item.title, getPreviousUrl(visit));
-                        urlNodes.push(tempNode);
+                        if(visit.visitTime >= sessionBegin && visit.visitTime <= sessionEnd){
+                            sessionVisitItems.push(visit); //pushes all visits into sessionVisitItems
+                            visitToHistoryMap.set(visit, item); //for quick access between historyItem properties and visit properties
+                            var tempNode = new urlNode(item.url, visit.visitTime, item.title, getPreviousUrl(visit));
+                            console.log("tempNode: " + tempNode.url);
+                            urlNodes.push(tempNode);
+                        }
                     });
                 });
-            urlNodes.forEach(element => { //debugging
-                console.log(element.title);
-            });
         });
     }
 
@@ -89,6 +81,15 @@ chrome.runtime.onMessage.addListener(function(message){
         }
     }
 });
+
+class urlNode {
+    constructor(url, visitTime, title, previousUrls) {
+        this.url = url;
+        this.visitTime = visitTime;
+        this.title = title;
+        this.previousUrl = previousUrls;
+    }
+}
 
 //CURRENT ISSUE: visits retrieved from chrome.history.getVisits() are from the ENTIRE history, and not within the session time
 //this can likely be solved by checking for a valid time of each visit retrieved. There is likely a lot a redundancy in this code
