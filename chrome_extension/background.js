@@ -26,3 +26,29 @@ chrome.webNavigation.onCommitted.addListener(function(data){
     tabIdToUrl[data.tabId.toString()] = data.url;
     chrome.storage.local.set(tabIdToUrl);
 });
+
+//strategy for tracking browsing data with live tracking:
+//instead of using the history api to get the browsing history, we can use the webNavigation api to get the url of the current tab
+//store each url and page title in array of objects, as well as previous url and page title for graph connections
+
+class urlGraph {
+    constructor() {
+        this.nodes = [];
+        this.edges = [];
+    }
+
+    addNode(node) {
+        this.nodes.push(node);
+    }
+
+    addEdge(edge) {
+        this.edges.push(edge);
+    }
+}
+
+class urlNode {
+    constructor(url, title) {
+        this.url = url;
+        this.title = title;
+    }
+}
