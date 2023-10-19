@@ -14,39 +14,50 @@ chrome.runtime.onMessage.addListener(function(message){
         switchState = false;
         sessionTotal = sessionEnd - sessionBegin;
         sessionComplete = true;
+
         console.log(false)
         console.log("session complete");
         console.log("Collected Data: ")
-        urlNodes.array.forEach(element => {
-            console.log("URL: " + element.url + " Title: " + element.title)
-            element.prevUrls.forEach(url => {
-                console.log("Previous URL: " + url)
-            });
+        urlNodes.forEach(element => {
+            console.log("URL: " + element.url + " Title: " + element.title);
+            if(element.prevUrls)
+            {
+                element.prevUrls.forEach(url => {
+                    console.log("Previous URL: " + url)
+                });
+            }
         });
+
     }
 });
 
 var isNewUrl = false;
 var currentUrl, currentTitle, previousUrls = [], prevUrlNode;
-while(switchState){
-    if(isNewUrl){
-        if(document.referrer){ 
-            previousUrls.push(document.referrer);
-        }
-        urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
-        isNewUrl = false;
-        previousUrls = [];
-    }
-    currentUrl = window.location.href;
-    currentTitle = window.name;
-}
 
-window.onhashchange = function() {
-    isNewUrl = true;                                  //detect when url changes
-};                                                    //or when new tab is opened
-chrome.tabs.onCreated.addListener(function(tab) {
-    isNewUrl = true;
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    currentUrl = changeInfo.url;
+    currentTitle = tab.title;
+    urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
+    isNewUrl = false;
+    previousUrls = [];
 });
+chrome.tabs.onCreated.addListener(function(tab) {
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        currentUrl = tabs[0].url;
+        currentTitle = tabs[0].title;
+      });
+    urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
+    isNewUrl = false;
+    previousUrls = [];
+});
+chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
+    chrome.webNavigation.getFrame({tabId: details.tabId, frameId: 0}, function(frameDetails) {
+        if(frameDetails.parentFrameId === -1){
+            console.log('Referrer URL: ' + frameDetails.url);
+            previousUrls.push(frameDetails.url);
+        }
+    });
+}, {url: [{urlMatches : '<all_urls>'}]});
 
 
 
