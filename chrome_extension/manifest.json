@@ -10,13 +10,8 @@
       "background": {
         "service_worker": "background.js"
       },
-
-      "host_permissions": [
-        "https://developer.chrome.com/*"
-      ],
     
       "permissions": [
-        "history",
         "storage",
         "tabs",
         "webNavigation"

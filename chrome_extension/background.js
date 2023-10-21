@@ -19,6 +19,10 @@ chrome.runtime.onMessage.addListener(function(message){
         console.log("session complete");
         console.log("Collected Data: ")
         urlNodes.forEach(element => {
+            if(!element.url){
+                urlNodes.pop(element);
+                return;
+            }
             console.log("URL: " + element.url + " Title: " + element.title);
             if(element.prevUrls)
             {
@@ -31,35 +35,50 @@ chrome.runtime.onMessage.addListener(function(message){
     }
 });
 
-var isNewUrl = false;
 var currentUrl, currentTitle, previousUrls = [], prevUrlNode;
 
+
+chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
+    if (details.frameId === 0) {
+      var referringUrl = details.url;
+      previousUrls.push(referringUrl);
+    }
+  });
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    if(tab.tabStatus != "complete"){
+        setTimeout(function() {
+            // do something after 1000 milliseconds
+          }, 500);
+    }
     currentUrl = changeInfo.url;
     currentTitle = tab.title;
-    urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
-    isNewUrl = false;
-    previousUrls = [];
+    if(currentUrl in previousUrls)
+    {
+        urlNodes.push(new urlNode(currentUrl, currentTitle, []));
+    }
+    else
+    {
+        urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
+        previousUrls = [];
+    }
 });
+/*
 chrome.tabs.onCreated.addListener(function(tab) {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
         currentUrl = tabs[0].url;
         currentTitle = tabs[0].title;
       });
-    urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
-    isNewUrl = false;
-    previousUrls = [];
+    if(currentUrl in previousUrls)
+    {
+        urlNodes.push(new urlNode(currentUrl, currentTitle, []));
+    }
+    else
+    {
+        urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
+        previousUrls = [];
+    }
 });
-chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
-    chrome.webNavigation.getFrame({tabId: details.tabId, frameId: 0}, function(frameDetails) {
-        if(frameDetails.parentFrameId === -1){
-            console.log('Referrer URL: ' + frameDetails.url);
-            previousUrls.push(frameDetails.url);
-        }
-    });
-}, {url: [{urlMatches : '<all_urls>'}]});
-
-
+*/
 
 class urlGraph {
     constructor() {
@@ -77,9 +96,10 @@ class urlGraph {
 }
 
 class urlNode {
-    constructor(url, title) {
+    constructor(url, title, prevUrls) {
         this.url = url;
         this.title = title;
+        this.prevUrls = prevUrls;
     }
     setPrevUrls(prevUrls) {
         this.prevUrls = prevUrls;
