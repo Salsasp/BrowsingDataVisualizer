@@ -2,6 +2,7 @@ console.log("background.js loaded");
 var sessionBegin, sessionEnd, sessionTotal;
 var sessionComplete = false, switchState = false;
 var urlNodes = [];
+var processedNodes = [];
 
 chrome.runtime.onMessage.addListener(function(message){
     if(message.switchEnabled){
@@ -15,93 +16,77 @@ chrome.runtime.onMessage.addListener(function(message){
         sessionTotal = sessionEnd - sessionBegin;
         sessionComplete = true;
 
-        console.log(false)
-        console.log("session complete");
-        console.log("Collected Data: ")
-        urlNodes.forEach(element => {
-            if(!element.url){
-                urlNodes.pop(element);
-                return;
+        let processedNodeCounter = -1; //index for processedNodes
+        for(i = 0; i < urlNodes.length; i++) {
+            if(!hasUrl(urlNodes[i].url)) {
+                processedNodes.push(urlNodes[i]);
+                processedNodeCounter++;
             }
-            console.log("URL: " + element.url + " Title: " + element.title);
-            if(element.prevUrls)
-            {
-                element.prevUrls.forEach(url => {
-                    console.log("Previous URL: " + url)
-                });
+            for(j = i+1; j < urlNodes.length; j++) {
+                if(processedNodes[processedNodeCounter].url == urlNodes[j].url) {
+                    processedNodes[processedNodeCounter].addNextUrl(urlNodes[j].nextUrls[0]); //merge nextUrls that have same referrer
+                }
             }
-        });
+        }
 
+
+        urlNodes.length = 0; //clear urlNodes
+        processedNodes.length = 0; //clear processedNodes
     }
 });
 
-var currentUrl, currentTitle, previousUrls = [], prevUrlNode;
+var currentUrl, currentTitle, nextUrl;
 
+//helper function to remove duplicates
+function hasUrl(url) {
+    var found = false;
+    processedNodes.forEach(function(node) {
+        if(node.url == url) {
+            found = true;
+        }
+    });
+    return found;
+}
 
 chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
-    if (details.frameId === 0) {
-      var referringUrl = details.url;
-      previousUrls.push(referringUrl);
+    if (details.frameId === 0 && switchState) {
+        nextUrl = details.url;
+        //console.log("Next URL: " + nextUrl);
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        var currentUrl = tabs[0].url;
+        //console.log("Current URL: " + currentUrl);
+        var currentTitle = tabs[0].title;
+        //console.log("Current Title: " + currentTitle);
+        let tempNode = new urlNode(currentUrl, currentTitle, nextUrl);
+        urlNodes.push(tempNode);
+      });
     }
   });
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    if(tab.tabStatus != "complete"){
-        setTimeout(function() {
-            // do something after 1000 milliseconds
-          }, 500);
-    }
-    currentUrl = changeInfo.url;
-    currentTitle = tab.title;
-    if(currentUrl in previousUrls)
-    {
-        urlNodes.push(new urlNode(currentUrl, currentTitle, []));
-    }
-    else
-    {
-        urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
-        previousUrls = [];
-    }
-});
-/*
-chrome.tabs.onCreated.addListener(function(tab) {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        currentUrl = tabs[0].url;
-        currentTitle = tabs[0].title;
-      });
-    if(currentUrl in previousUrls)
-    {
-        urlNodes.push(new urlNode(currentUrl, currentTitle, []));
-    }
-    else
-    {
-        urlNodes.push(new urlNode(currentUrl, currentTitle, previousUrls));
-        previousUrls = [];
-    }
-});
-*/
 
 class urlGraph {
     constructor() {
         this.nodes = [];
-        this.edges = [];
+        this.adjList = new Map();
     }
 
     addNode(node) {
         this.nodes.push(node);
+        this.adjList.set(node.url, [node.nextUrl])
     }
 
     addEdge(edge) {
-        this.edges.push(edge);
+        this.adjList.push(edge);
     }
 }
 
 class urlNode {
-    constructor(url, title, prevUrls) {
+    constructor(url, title, nextUrl) {
         this.url = url;
         this.title = title;
-        this.prevUrls = prevUrls;
+        this.nextUrls = [];
+        this.nextUrls.push(nextUrl);
     }
-    setPrevUrls(prevUrls) {
-        this.prevUrls = prevUrls;
+    addNextUrl(nextUrl) {
+        this.nextUrls.push(nextUrl);
     }
 }
