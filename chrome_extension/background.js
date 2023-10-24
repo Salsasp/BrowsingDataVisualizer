@@ -28,7 +28,21 @@ chrome.runtime.onMessage.addListener(function(message){
                 }
             }
         }
+        let visitCounter = 0;
+        for(i = 0; i < processedNodes.length; i++) {
+            visitCounter = 0;
+            for(j = 0; j < urlNodes.length; j++) {
+                if(processedNodes[i].url == urlNodes[j].url) {
+                    visitCounter++;
+                }
+            }
+            processedNodes[i].setNumVisits(visitCounter);
+        }
 
+        processedNodes.forEach(function(node) {
+            const jsonString = JSON.stringify(node);
+            console.log(jsonString);
+        });
 
         urlNodes.length = 0; //clear urlNodes
         processedNodes.length = 0; //clear processedNodes
@@ -63,21 +77,6 @@ chrome.webNavigation.onBeforeNavigate.addListener(function(details) {
     }
   });
 
-class urlGraph {
-    constructor() {
-        this.nodes = [];
-        this.adjList = new Map();
-    }
-
-    addNode(node) {
-        this.nodes.push(node);
-        this.adjList.set(node.url, [node.nextUrl])
-    }
-
-    addEdge(edge) {
-        this.adjList.push(edge);
-    }
-}
 
 class urlNode {
     constructor(url, title, nextUrl) {
@@ -85,8 +84,21 @@ class urlNode {
         this.title = title;
         this.nextUrls = [];
         this.nextUrls.push(nextUrl);
+        this.numVisits = 1;
     }
     addNextUrl(nextUrl) {
         this.nextUrls.push(nextUrl);
+    }
+    setNumVisits(numVisits) {
+        this.numVisits = numVisits;
+    }
+
+    toJSON() {
+        return {
+            url: this.url,
+            title: this.title,
+            nextUrls: this.nextUrls,
+            numVisits: this.numVisits
+        }
     }
 }
