@@ -1,24 +1,23 @@
 import { useState } from 'react'
 
 
+const nodeColor = '#00FF1B';
+const lineColor = '#000000'
 
 // SVG element for a node
 function Node({x, y, radius = 10, setActive}) {
 
-  const fill = '#66FF19';
   
   return (
-    <circle cx={x} cy={y} r={radius} fill={fill} onMouseDown={setActive}/>
+    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} stroke-width='0.5%' onMouseDown={setActive}/>
   )
 }
 
 // SVG element for a link between nodes
 function Link({source, target}) {
 
-  const stroke = '#555555'; 
-
   return (
-    <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={stroke}/>
+    <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={lineColor} stroke-width={3}/>
   )
 }
 
@@ -47,7 +46,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   
   // Color for the background of the graph
   const backgroundFill = '#eeeeee'
-  const baseNodeSize = 10;
+  const baseNodeRadius = 10;
 
   // Function called when mouse moves over the graph
   const mouseMoved = e => {
@@ -103,10 +102,11 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 
 	
 	{nodes && Object.entries(graphNodes).map(([nodeName, node]) => <Node key={nodeName}
-									x={node.x}
-									y={node.y}
-									url={node.url}
-									setActive={() => setActiveNode(nodeName)}/>)}
+									     x={node.x}
+									     y={node.y}
+									     url={node.url}
+									     radius={getNumLinks(nodeName, links) * baseNodeRadius}
+									     setActive={() => setActiveNode(nodeName)}/>)}
 	
       </svg>
     </div>
