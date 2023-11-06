@@ -6,18 +6,55 @@ const lineColor = '#000000'
 
 // SVG element for a node
 function Node({x, y, radius = 10, setActive}) {
-
-  
   return (
     <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} stroke-width='0.5%' onMouseDown={setActive}/>
   )
+}
+
+
+
+// Creates an array of nodes given a node list
+function NodeList({nodes, links, nodeOnTop = null, setActive}) {
+
+
+  // Iterate through the nodes, creating a svg element for each
+  const nodeList = Object.entries(nodes).map(([nodeName, nodeObject]) => <Node key={nodeName}
+									       x={nodeObject.x}
+									       y={nodeObject.y}
+									       url={nodeObject.url}
+									       setActive={() => setActive(nodeName)}/>)
+
+  // If a user is moving a node, move it to the top so that it appears over other nodes
+  if (nodeOnTop) {
+
+    
+    // index of node to move
+    let nodeIndex;
+
+    // search for node
+    for (const index in nodeList) {
+      if (nodeList[index].key === nodeOnTop) {
+	nodeIndex = index;
+	break;
+      }
+    }
+
+    const node = nodeList[nodeIndex];
+    // delete node from list
+    nodeList.splice(nodeIndex, 1);
+      
+    // put it at the front
+    nodeList.push(node);
+  }
+
+  return nodeList
 }
 
 // SVG element for a link between nodes
 function Link({source, target}) {
 
   return (
-    <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={lineColor} stroke-width={3}/>
+    <line x1={source.x} y1={source.y} x2={target.x} y2={target.y} stroke={lineColor} strokeWidth={3}/>
   )
 }
 
@@ -42,7 +79,22 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 
   // Node that is currently being dragged
   const [activeNode, setActiveNode] = useState(null);
-  const [graphNodes, setGraphNodes] = useState(nodes);
+
+
+
+  // Place nodes
+  const tempNodes = {}
+  let x = 0;
+  let y = 0;
+
+  for (const node of nodes) {
+    tempNodes[node] = {x: x, y: y, radius: 20};
+    x += 50;
+    y += 50;
+  }
+
+  const [graphNodes, setGraphNodes] = useState(tempNodes);
+  
   
   // Color for the background of the graph
   const backgroundFill = '#eeeeee'
@@ -56,7 +108,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
     if(activeNode) {
       
       // Create a copy to edit the coords
-      const nodesCopy = {...nodes};
+      const nodesCopy = {...graphNodes};
 
 
       // New location of node
@@ -75,7 +127,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   }
 
   const mouseIn = e => {
-    const nodesCopy = {...nodes};
+    const nodesCopy = {...graphNodes};
 
     if (activeNode) {
       nodesCopy[activeNode].x = e.pageX - (e.target.offsetLeft || 0);
@@ -101,12 +153,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 					       target={graphNodes[link.target]} />)}
 
 	
-	{nodes && Object.entries(graphNodes).map(([nodeName, node]) => <Node key={nodeName}
-									     x={node.x}
-									     y={node.y}
-									     url={node.url}
-									     radius={getNumLinks(nodeName, links) * baseNodeRadius}
-									     setActive={() => setActiveNode(nodeName)}/>)}
+	{graphNodes && <NodeList nodes={graphNodes} links={links} nodeOnTop={activeNode} setActive={setActiveNode}/>}
 	
       </svg>
     </div>
