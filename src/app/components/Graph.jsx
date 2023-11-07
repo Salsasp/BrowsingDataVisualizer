@@ -81,16 +81,22 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   const [activeNode, setActiveNode] = useState(null);
 
 
+  // Value inner padding when placing nodes initially
+  const sidePadding = width * .2;
+  const topPadding = height * .2;
 
   // Place nodes
   const tempNodes = {}
-  let x = 0;
-  let y = 0;
 
   for (const node of nodes) {
+
+    const x = Math.floor(Math.random() * (width - sidePadding * 2)) + sidePadding;
+    const y = Math.floor(Math.random() * (height - topPadding * 2)) + topPadding;
+
     tempNodes[node] = {x: x, y: y, radius: 20};
-    x += 50;
-    y += 50;
+
+    // Assign location randomly
+    
   }
 
   const [graphNodes, setGraphNodes] = useState(tempNodes);
