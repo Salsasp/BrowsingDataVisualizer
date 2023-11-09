@@ -14,14 +14,10 @@ chrome.storage.local.get(['switchEnabled'], function(result) {
 document.getElementById("switch").addEventListener("click", function(){
     if(this.checked){
         switchEnabled = true;
-        console.log("switch enabled");
     }else{
         switchEnabled = false;
-        console.log("switch disabled");
     }
-    chrome.storage.local.set({switchEnabled: switchEnabled}, function() {
-        console.log('Value is set to ' + switchEnabled);
-    });
+    chrome.storage.local.set({switchEnabled: switchEnabled});
     chrome.runtime.sendMessage({switchEnabled: switchEnabled});
     //communicate with background.js to start/stop the timer
 });
