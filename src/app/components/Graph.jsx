@@ -3,13 +3,19 @@ import { useState } from 'react'
 
 
 // SVG element for a node
-function Node({x, y, setActive}) {
+function Node({x, y, visits, setActive}) {
 
-  const radius = 10;
+  const radius = visits;
   const fill = '#66FF19';
   
   return (
-    <circle cx={x} cy={y} r={radius} fill={fill} onMouseDown={setActive}/>
+    <circle cx={x} 
+    cy={y} 
+    r={radius} 
+    fill={fill} 
+    onMouseDown={setActive}
+    onClick={() => setLabel(`Node at (${x}, ${y}) with ${visits} visits`)}
+    />
   )
 }
 
@@ -23,7 +29,12 @@ function Link({source, target}) {
   )
 }
 
-
+// Component to display label
+function setLabel({label}) {
+  return (
+    <div>{label}</div>
+  )
+}
 
 export default function Graph({nodes, links,  width = 400, height = 500}) {
 
@@ -32,20 +43,17 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   // Node that is currently being dragged
   const [activeNode, setActiveNode] = useState(null);
 
-  
+  const [label, setLabel] = useState(null);
+
   // Color for the background of the graph
   const backgroundFill = '#eeeeee'
 
 
   // Function called when mouse moves over the graph
   const mouseMoved = e => {
-
-    
     // If the mouse is held down on a node, update its coordinates 
     if(activeNode) {
-
-
-      
+    
       // Create a copy to edit the coords
       const nodesCopy = {...nodes};
 
@@ -82,6 +90,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 									x={node.x}
 									y={node.y}
 									url={node.url}
+                  visits={node.visits}
 									setActive={() => setActiveNode(nodeName)}/>)}
 	
       </svg>
