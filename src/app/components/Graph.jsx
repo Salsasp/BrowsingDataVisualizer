@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 
 const nodeColor = '#00FF1B';
@@ -7,7 +7,7 @@ const lineColor = '#000000'
 // SVG element for a node
 function Node({x, y, radius = 10, setActive}) {
   return (
-    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} stroke-width='0.5%' onMouseDown={setActive}/>
+    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' onMouseDown={setActive}/>
   )
 }
 
@@ -27,7 +27,6 @@ function NodeList({nodes, links, nodeOnTop = null, setActive}) {
   // If a user is moving a node, move it to the top so that it appears over other nodes
   if (nodeOnTop) {
 
-    
     // index of node to move
     let nodeIndex;
 
@@ -85,21 +84,48 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   const sidePadding = width * .2;
   const topPadding = height * .2;
 
-  // Place nodes
+
   const tempNodes = {}
 
-  for (const node of nodes) {
+  const [graphNodes, setGraphNodes] = useState(null);
 
-    const x = Math.floor(Math.random() * (width - sidePadding * 2)) + sidePadding;
-    const y = Math.floor(Math.random() * (height - topPadding * 2)) + topPadding;
+  // Do a one time setup to place nodes
+  useEffect(() => {
+    // Place nodes
 
-    tempNodes[node] = {x: x, y: y, radius: 20};
-
-    // Assign location randomly
+    // Used for finding center of graph
+    let xsum = 0;
+    let ysum = 0;
     
-  }
+    for (const node of nodes) {
 
-  const [graphNodes, setGraphNodes] = useState(tempNodes);
+      // Randomly assign position
+      const x = Math.random() * (width - 2 * sidePadding) + sidePadding;
+      const y = Math.random() * (height - 2 * topPadding) + topPadding;
+
+      xsum += x;
+      ysum += y;
+      
+      tempNodes[node] = {x: x, y: y, radius: 20};
+    }
+
+    // Find center of the graph
+    const numNodes = nodes.length;
+    const xCenter = xsum / numNodes;
+    const yCenter = ysum / numNodes;
+
+    const xShift = width / 2 - xCenter;
+    const yShift = height / 2 - yCenter;
+
+    // Shift graph to the center
+    for (const [node, value] of Object.entries(tempNodes)) {
+      tempNodes[node].x = value.x + xShift;
+      tempNodes[node].y = value.y + yShift;
+    }
+
+    setGraphNodes(tempNodes);
+  }, [nodes])
+
   
   
   // Color for the background of the graph
@@ -154,7 +180,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 	
 	<rect width={width} height={height} fill={backgroundFill} />
 	
-	{links && links.map((link, i) => <Link key={i}
+	{links && graphNodes && links.map((link, i) => <Link key={i}
 					       source={graphNodes[link.source]}
 					       target={graphNodes[link.target]} />)}
 
