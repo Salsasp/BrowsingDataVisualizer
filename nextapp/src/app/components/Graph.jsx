@@ -5,16 +5,17 @@ const nodeColor = '#00FF1B';
 const lineColor = '#000000'
 
 // SVG element for a node
-function Node({x, y, radius = 10, setActive}) {
+function Node({x, y, radius = 10, setActive, setHover, unsetHover}) {
+
   return (
-    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' onMouseDown={setActive}/>
+    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' onMouseDown={setActive} onMouseEnter={setHover} onMouseLeave={unsetHover}/>
   )
 }
 
 
 
 // Creates an array of nodes given a node list
-function NodeList({nodes, links, nodeOnTop = null, setActive}) {
+function NodeList({nodes, nodeOnTop = null, setActive, setHover = () => {}, unsetHover = () => {}}) {
 
 
   // Iterate through the nodes, creating a svg element for each
@@ -22,7 +23,9 @@ function NodeList({nodes, links, nodeOnTop = null, setActive}) {
 									       x={nodeObject.x}
 									       y={nodeObject.y}
 									       url={nodeObject.url}
-									       setActive={() => setActive(nodeName)}/>)
+									       setActive={() => setActive(nodeName)}
+									       setHover={() => setHover(nodeName)}
+									       unsetHover={unsetHover}/>)
 
   // If a user is moving a node, move it to the top so that it appears over other nodes
   if (nodeOnTop) {
@@ -57,7 +60,13 @@ function Link({source, target}) {
   )
 }
 
-
+/**
+ * Gets the number of links a node has
+ *
+ * @param nodeName - Name of the node
+ * @param links - A list of objects wtih the format {source: 'node name', target: 'node name'}
+ * @returns The number of links
+ */
 function getNumLinks(nodeName, links) {
 
   let count = 0;
@@ -72,15 +81,25 @@ function getNumLinks(nodeName, links) {
   return count;
 }
 
-
-export default function Graph({nodes, links,  width = 400, height = 500}) {
+/**
+ * Displays a graph
+ *
+ * @param nodes - A list of strings used to identify each node
+ * @param links - A list of objects, in the format of {source: 'node name', target: 'node name'}
+ * @param width - Optional parameter for the width of the svg
+ * @parma height - Optional parameter for the height of the svg
+ * @param setInfoNode - Optional function that takes one parameter and is given the node that is currently being hovered over or dragged
+ */
+export default function Graph({nodes, links, setInfoNode = () => {}, width = 400, height = 500}) {
 
 
   // Node that is currently being dragged
   const [activeNode, setActiveNode] = useState(null);
 
+  // Node that is being hovered over
+  const [hoveredNode, setHoveredNode] = useState(null);
 
-  // Value inner padding when placing nodes initially
+  // inner padding when placing nodes initially
   const sidePadding = width * .2;
   const topPadding = height * .2;
 
@@ -88,7 +107,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
   const tempNodes = {}
 
   const [graphNodes, setGraphNodes] = useState(null);
-
+  
   // Do a one time setup to place nodes
   useEffect(() => {
     // Place nodes
@@ -100,8 +119,8 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
     for (const node of nodes) {
 
       // Randomly assign position
-      const x = Math.random() * (width - 2 * sidePadding) + sidePadding;
-      const y = Math.random() * (height - 2 * topPadding) + topPadding;
+      const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
+      const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
 
       xsum += x;
       ysum += y;
@@ -124,7 +143,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
     }
 
     setGraphNodes(tempNodes);
-  }, [nodes])
+  }, [])
 
   
   
@@ -142,12 +161,16 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
       // Create a copy to edit the coords
       const nodesCopy = {...graphNodes};
 
+      console.log(nodesCopy[activeNode].x, nodesCopy[activeNode].y)
+      console.log(graphNodes[activeNode].x, graphNodes[activeNode].y)
 
       // New location of node
       const deltaX = nodesCopy[activeNode].x + e.movementX;
       const deltaY = nodesCopy[activeNode].y + e.movementY;
 
 
+      console.log(e.movementX);
+      console.log(e.movementY);
       // Move the dragged node, if it hits the bound keep it where it is
       nodesCopy[activeNode].x = deltaX > width || deltaX < 0 ? nodesCopy[activeNode].x : deltaX;
       nodesCopy[activeNode].y = deltaY > height || deltaY < 0 ? nodesCopy[activeNode].y : deltaY;
@@ -158,25 +181,38 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
     }
   }
 
-  const mouseIn = e => {
-    const nodesCopy = {...graphNodes};
-
-    if (activeNode) {
-      nodesCopy[activeNode].x = e.pageX - (e.target.offsetLeft || 0);
-      nodesCopy[activeNode].y = e.pageY - (e.target.offsetTop || 0);
-    }
-  }
-
+  
   // When the mouse isn't being held down, set the active node to null
   const mouseUp = () => {
     setActiveNode(null);
   }
 
 
+  // Set hovered node 
+  const nodeEnter = nodeName => {
+    setHoveredNode(nodeName);
+    setInfoNode(nodeName);
+  }
+
+  // Unset hovered node 
+  const nodeLeave = () => {
+    setHoveredNode(null);
+    setInfoNode(activeNode);
+  }
+
+  // Deactivate dragging if the mouse leaves the canvas
+  const canvasLeave = () => {
+    if (!hoveredNode) {
+      setActiveNode(null);
+      setInfoNode(null);
+    }
+  }
+
+
   
   return (
-    <div id="Graph">
-      <svg viewBox={'0 0 ' + width + ' ' + height} width={width} height={height} onMouseMove={mouseMoved} onMouseUp={mouseUp} onMouseEnter={mouseIn}>
+    <div id="Graph" >
+      <svg className="rounded shadow"viewBox={'0 0 ' + width + ' ' + height} width={width} height={height} onMouseMove={mouseMoved} onMouseUp={mouseUp} onMouseLeave={canvasLeave} >
 	
 	<rect width={width} height={height} fill={backgroundFill} />
 	
@@ -185,7 +221,7 @@ export default function Graph({nodes, links,  width = 400, height = 500}) {
 					       target={graphNodes[link.target]} />)}
 
 	
-	{graphNodes && <NodeList nodes={graphNodes} links={links} nodeOnTop={activeNode} setActive={setActiveNode}/>}
+	{graphNodes && <NodeList nodes={graphNodes} links={links} nodeOnTop={activeNode} setActive={setActiveNode} setHover={nodeEnter} unsetHover={nodeLeave}/>}
 	
       </svg>
     </div>
