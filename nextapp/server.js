@@ -31,6 +31,7 @@ app.prepare().then(() => {
   server.use(bodyParser.urlencoded());
   server.use(bodyParser.json());
 
+
   server.use(cookieParser());
 
   //Used to login a user and redirect to user page
@@ -95,6 +96,21 @@ app.prepare().then(() => {
     }
   });
 
+  server.get('/userData', async (req, res) => {
+
+    const { username } = req.body;
+
+    try {
+      const user = await User.findOne({ where: { username }})
+      if (user) {
+	res.send(user.browsingData);
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+      res.status(500).send('An error occurred');
+    }
+
+  })
   server.get('*', (req, res) => {
     return handle(req, res);
   });
