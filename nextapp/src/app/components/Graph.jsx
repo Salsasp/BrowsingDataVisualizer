@@ -99,10 +99,7 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // Node that is being hovered over
   const [hoveredNode, setHoveredNode] = useState(null);
 
-  // inner padding when placing nodes initially
-  const sidePadding = width * .2;
-  const topPadding = height * .2;
-
+  
 
   const tempNodes = {}
 
@@ -113,13 +110,16 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // How long each physics tick is, in milliseconds
   const physicsTick = 20;
   const [mouseVel, setMouseVel] = useState(null);
+
+
+  // Maximum velocity
+  const maxVel = 2;
   
   // Update the positions of all the nodes according to their velocities, and decrease their velocity by accel
   const updateNodePositions = (setGraphNodes, activeNode, mouseVel) => {
 
     // Deceleration constant of nodes, in units per second
-    const accel = 0.5;
-    const maxVel = 20;
+    const accel = .8;
     const minVel = 0.01;
     
     setGraphNodes(graphNodes => {
@@ -164,6 +164,16 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 	      values.vel.y = 0;
 	    }
 
+	    // Cap the maximum velocity
+	    if (Math.abs(values.vel.x) > maxVel) {
+	      values.vel.x = values.vel.x > 0 ? maxVel : -1 * maxVel;
+	    }
+
+	    if (Math.abs(values.vel.y) > maxVel) {
+	      values.vel.y = values.vel.y > 0 ? maxVel : -1 * maxVel;
+	    }
+
+	    console.log("velX:", values.vel.x, "velY:", values.vel.y);
 	    nodesCopy[node] = values;
 
 	  }
@@ -189,6 +199,11 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
     let xsum = 0;
     let ysum = 0;
 
+
+    // inner padding when placing nodes initially
+    const sidePadding = width * .2;
+    const topPadding = height * .2;
+
     for (const node of nodes) {
 
       // Randomly assign position
@@ -202,20 +217,6 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 
       setNodesArePlaced(true);
 
-      // Find center of the graph
-      const numNodes = nodes.length;
-      const xCenter = xsum / numNodes;
-      const yCenter = ysum / numNodes;
-
-      const xShift = width / 2 - xCenter;
-      const yShift = height / 2 - yCenter;
-
-      // Shift graph to the center
-      for (const [node, value] of Object.entries(tempNodes)) {
-	tempNodes[node].x = value.x + xShift;
-	tempNodes[node].y = value.y + yShift;
-      }
-
       setGraphNodes(tempNodes);
     }
     // Update nodes
@@ -223,6 +224,8 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
     
   }, [])
 
+
+  // Update positions ever `physicsTick` milliseconds
   useEffect (() => {
     const physics = setInterval(() => updateNodePositions(setGraphNodes, activeNode, mouseVel), physicsTick);
     
@@ -246,15 +249,16 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       // Create a copy to edit the coords
       const nodesCopy = {...graphNodes};
 
-      const mouseVel = {x: e.movementX, y: e.movementY};
 
       // Update the dragged node's velocity
 
-      nodesCopy[activeNode].vel.x = mouseVel.x;
-      nodesCopy[activeNode].vel.y = mouseVel.y;
+      nodesCopy[activeNode].vel.x = e.movementX;
+      nodesCopy[activeNode].vel.y = e.movementY;
 
-      const deltaX = nodesCopy[activeNode].x + mouseVel.x;
-      const deltaY = nodesCopy[activeNode].y + mouseVel.y;
+      console.log("Mouse Movement: ", e.movementX, e.movementY);
+      
+      const deltaX = nodesCopy[activeNode].x + e.movementX;
+      const deltaY = nodesCopy[activeNode].y + e.movementY;
       
 
       // Only move node if it's within the bounds
@@ -263,36 +267,69 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 	nodesCopy[activeNode].y = deltaY;
       }
 
+      // Velocity scalar. Higher = faster nodes;
+      const velScalar = 4;
+
       
-      const maxVel = 1
       // Set velocities of other nodes
       for (const [node, values] of Object.entries(nodesCopy)) {
 
 	if (node != activeNode) {
-	  const distX = Math.abs(nodesCopy[activeNode].x - values.x);
-	  const distY = Math.abs(nodesCopy[activeNode].y - values.y);
 
-	  const activeVel = {x: nodesCopy[activeNode].vel.x, y: nodesCopy[activeNode].vel.y};
+	  const velVectorLength = Math.hypot(nodesCopy[activeNode].vel.x + nodesCopy[activeNode].vel.y);
 
+	  // Unit vectors for active node's velocity
 
-	  const movingTowardsX = nodesCopy[node].x - nodesCopy[activeNode].x 
+	  let unitVelX;
+	  let unitVelY;
+	  
+	  if (velVectorLength != 0) {
+	    unitVelX = nodesCopy[activeNode].vel.x / velVectorLength;
+	    unitVelY = nodesCopy[activeNode].vel.y / velVectorLength;
+	  } else {
+	    unitVelX = 0;
+	    unitVelY = 0;
+	  }
+	  
+	  // If node is moving towards or away from this node
+	  const movingTowardsX = (nodesCopy[node].x - nodesCopy[activeNode].x) * unitVelX > 0;
+	  const movingTowardsY = (nodesCopy[node].y - nodesCopy[activeNode].y) * unitVelY > 0;
 
+	  console.log("Moving X:", movingTowardsX, "Moving Y:", movingTowardsY);
 
-	  // Set velocity according to distance
-	  values.vel.x += (activeVel.x  / physicsTick + Math.random() * activeVel.x / physicsTick) * 0.5;
-	  values.vel.y += (activeVel.y  / physicsTick + Math.random() * activeVel.y / physicsTick) * 0.5;
+	  let velX = velScalar;
+	  let velY = velScalar;
+
+	  // If the active node is moving towards this node, add less velocity
+	  if (movingTowardsX) {
+	    velX = velScalar / 4;
+	  } 
+
+	  if (movingTowardsY) {
+	    velY = velScalar / 4
+	  }
+
+	  // Random motion
+	  let randomX = Math.random() * unitVelX / physicsTick * 5;
+	  let randomY = Math.random() * unitVelY / physicsTick * 5;
+
+	  if (Math.random() > .5) {
+	    randomX = randomX * -1;
+	  }
+
+	  if (Math.random() > .5) {
+	    randomY = randomY * -1;
+	  }
+	  
+	  
+	  // Set the velocity, adding some random motion in 
+	  values.vel.x += unitVelX * velX / physicsTick + randomX;
+	  values.vel.y += unitVelY * velY / physicsTick + randomY;
 
 	  // Cap the maximum velocity
 
-	  if (values.vel.x > maxVel) {
-	    values.vel.x = maxVel;
-	  }
-
-	  if (values.vel.y > maxVel) {
-	    values.vel.y = maxVel;
-	  }
-
-	  // Set it to zero if it's too far away
+	  
+	  
 
 	  
 
