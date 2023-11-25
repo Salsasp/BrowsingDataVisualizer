@@ -118,6 +118,15 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
     
     for (const node of nodes) {
 
+      // Nodes that have an immediate connection with this node
+      const connectedNodes = {}
+
+      for (const link of links) {
+	if (link.source === node || link.target === node) {
+	  connectedNodes[links.source === node ? link.target : link.source] = true;
+	}
+      }
+      
       // Randomly assign position
       const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
       const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
@@ -125,7 +134,41 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       xsum += x;
       ysum += y;
       
-      tempNodes[node] = {x: x, y: y, radius: 20};
+      tempNodes[node] = {x: x, y: y, radius: 20, connectedNodes};
+    }
+
+
+    const setConnectedNodes = (node, foundNodes) => {
+
+      let foundAllNodes = true;
+
+      let unsearchNodes = [];
+
+      // Check to see if all nodes have been found
+      for (const foundNode of foundNodes) {
+	if (!node.connectedNodes[foundNode]) {
+	  foundAllNodes = false;
+	  unsearchedNodes.push(foundNode);
+	}
+      }
+
+      if (foundAllNodes) {
+	return;
+      }
+
+      for (const node of unsearchedNodes) {
+
+	Object.entries(node.connectedNodes).map(connectedNode => {
+	  foundNodes[connectedNode] = true;
+	  getConnectedNodes(tempNode[connectedNode], foundNodes);
+	})
+      }
+
+      node.connectedNodes = foundNodes;
+    };
+    // Connect all nodes
+    for (const node of tempNodes) {
+      setConnectedNodes(node);
     }
 
     // Find center of the graph
