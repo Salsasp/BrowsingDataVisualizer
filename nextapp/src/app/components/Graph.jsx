@@ -99,23 +99,110 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // Node that is being hovered over
   const [hoveredNode, setHoveredNode] = useState(null);
 
-  // inner padding when placing nodes initially
-  const sidePadding = width * .2;
-  const topPadding = height * .2;
-
+  
 
   const tempNodes = {}
 
-  const [graphNodes, setGraphNodes] = useState(null);
+  const [graphNodes, setGraphNodes] = useState(false);
+
+
+  // How long each physics tick is, in milliseconds
+  const physicsTick = 20;
+  const [mouseVel, setMouseVel] = useState(null);
+
+
+  // Maximum velocity
+  const maxVel = 2;
   
+  // Update the positions of all the nodes according to their velocities, and decrease their velocity by accel
+  const updateNodePositions = (setGraphNodes, activeNode, mouseVel) => {
+
+    // Deceleration constant of nodes, in units per second
+    const accel = .8;
+    const minVel = 0.01;
+    
+    setGraphNodes(graphNodes => {
+      // If the mouse is held down on a node, update its coordinates 
+
+
+      const nodesCopy = {...graphNodes};
+      
+      if (graphNodes) {
+
+	
+	for (const [node, values] of Object.entries(graphNodes)) {
+
+
+	  if (node != activeNode) {
+	    // Update position
+
+	    const newX = values.x + values.vel.x;
+	    const newY = values.y + values.vel.y;
+
+	    // Check the bounds
+	    values.x = newX < 0 || newX > width ? values.x : newX;
+	    values.y = newY < 0 || newY > height ? values.y : newY;
+
+	    // Decrease velocity
+
+	    if (values.vel.x != 0) {
+	      values.vel.x = values.vel.x < 0 ? values.vel.x + accel / 1000 * physicsTick: values.vel.x - accel / 1000 * physicsTick;
+	    }
+
+	    if (values.vel.y != 0) {
+	      values.vel.y = values.vel.y < 0 ? values.vel.y + accel / 1000 * physicsTick : values.vel.y - accel / 1000 * physicsTick;
+	    }
+
+	    // If velocity is  below threshold set it to zero
+
+	    if (Math.abs(values.vel.x) < minVel) {
+	      values.vel.x = 0;
+	    }
+
+	    if (Math.abs(values.vel.y) < minVel) {
+	      values.vel.y = 0;
+	    }
+
+	    // Cap the maximum velocity
+	    if (Math.abs(values.vel.x) > maxVel) {
+	      values.vel.x = values.vel.x > 0 ? maxVel : -1 * maxVel;
+	    }
+
+	    if (Math.abs(values.vel.y) > maxVel) {
+	      values.vel.y = values.vel.y > 0 ? maxVel : -1 * maxVel;
+	    }
+
+	    console.log("velX:", values.vel.x, "velY:", values.vel.y);
+	    nodesCopy[node] = values;
+
+	  }
+	}
+
+	return nodesCopy;
+      } else {
+	return graphNodes;
+      }
+    })
+  };
+
+
+
+  
+  
+
   // Do a one time setup to place nodes
   useEffect(() => {
     // Place nodes
 
-    // Used for finding center of graph
+      // Used for finding center of graph
     let xsum = 0;
     let ysum = 0;
-    
+
+
+    // inner padding when placing nodes initially
+    const sidePadding = width * .2;
+    const topPadding = height * .2;
+
     for (const node of nodes) {
 
       // Nodes that have an immediate connection with this node
@@ -170,23 +257,21 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
     for (const node of tempNodes) {
       setConnectedNodes(node);
     }
+    // Update nodes
+      setGraphNodes(tempNodes);
 
-    // Find center of the graph
-    const numNodes = nodes.length;
-    const xCenter = xsum / numNodes;
-    const yCenter = ysum / numNodes;
-
-    const xShift = width / 2 - xCenter;
-    const yShift = height / 2 - yCenter;
-
-    // Shift graph to the center
-    for (const [node, value] of Object.entries(tempNodes)) {
-      tempNodes[node].x = value.x + xShift;
-      tempNodes[node].y = value.y + yShift;
-    }
-
-    setGraphNodes(tempNodes);
+    
   }, [])
+
+
+  // Update positions ever `physicsTick` milliseconds
+  useEffect (() => {
+    const physics = setInterval(() => updateNodePositions(setGraphNodes, activeNode, mouseVel), physicsTick);
+    
+    return () => clearInterval(physics);
+  }, [activeNode, mouseVel])
+
+
 
   
   
@@ -197,29 +282,99 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // Function called when mouse moves over the graph
   const mouseMoved = e => {
 
-    
-    // If the mouse is held down on a node, update its coordinates 
+
     if(activeNode) {
       
       // Create a copy to edit the coords
       const nodesCopy = {...graphNodes};
 
-      console.log(nodesCopy[activeNode].x, nodesCopy[activeNode].y)
-      console.log(graphNodes[activeNode].x, graphNodes[activeNode].y)
 
-      // New location of node
+      // Update the dragged node's velocity
+
+      nodesCopy[activeNode].vel.x = e.movementX;
+      nodesCopy[activeNode].vel.y = e.movementY;
+
+      console.log("Mouse Movement: ", e.movementX, e.movementY);
+      
       const deltaX = nodesCopy[activeNode].x + e.movementX;
       const deltaY = nodesCopy[activeNode].y + e.movementY;
+      
 
+      // Only move node if it's within the bounds
+      if (deltaX > 0 && deltaX < width && deltaY > 0 && deltaY < height) {
+	nodesCopy[activeNode].x = deltaX;
+	nodesCopy[activeNode].y = deltaY;
+      }
 
-      console.log(e.movementX);
-      console.log(e.movementY);
-      // Move the dragged node, if it hits the bound keep it where it is
-      nodesCopy[activeNode].x = deltaX > width || deltaX < 0 ? nodesCopy[activeNode].x : deltaX;
-      nodesCopy[activeNode].y = deltaY > height || deltaY < 0 ? nodesCopy[activeNode].y : deltaY;
+      // Velocity scalar. Higher = faster nodes;
+      const velScalar = 4;
 
       
-      // Update nodes
+      // Set velocities of other nodes
+      for (const [node, values] of Object.entries(nodesCopy)) {
+
+	if (node != activeNode) {
+
+	  const velVectorLength = Math.hypot(nodesCopy[activeNode].vel.x + nodesCopy[activeNode].vel.y);
+
+	  // Unit vectors for active node's velocity
+
+	  let unitVelX;
+	  let unitVelY;
+	  
+	  if (velVectorLength != 0) {
+	    unitVelX = nodesCopy[activeNode].vel.x / velVectorLength;
+	    unitVelY = nodesCopy[activeNode].vel.y / velVectorLength;
+	  } else {
+	    unitVelX = 0;
+	    unitVelY = 0;
+	  }
+	  
+	  // If node is moving towards or away from this node
+	  const movingTowardsX = (nodesCopy[node].x - nodesCopy[activeNode].x) * unitVelX > 0;
+	  const movingTowardsY = (nodesCopy[node].y - nodesCopy[activeNode].y) * unitVelY > 0;
+
+	  console.log("Moving X:", movingTowardsX, "Moving Y:", movingTowardsY);
+
+	  let velX = velScalar;
+	  let velY = velScalar;
+
+	  // If the active node is moving towards this node, add less velocity
+	  if (movingTowardsX) {
+	    velX = velScalar / 4;
+	  } 
+
+	  if (movingTowardsY) {
+	    velY = velScalar / 4
+	  }
+
+	  // Random motion
+	  let randomX = Math.random() * unitVelX / physicsTick * 5;
+	  let randomY = Math.random() * unitVelY / physicsTick * 5;
+
+	  if (Math.random() > .5) {
+	    randomX = randomX * -1;
+	  }
+
+	  if (Math.random() > .5) {
+	    randomY = randomY * -1;
+	  }
+	  
+	  
+	  // Set the velocity, adding some random motion in 
+	  values.vel.x += unitVelX * velX / physicsTick + randomX;
+	  values.vel.y += unitVelY * velY / physicsTick + randomY;
+
+	  // Cap the maximum velocity
+
+	  
+	  
+
+	  
+
+	  nodesCopy[node] = values;
+	}
+      }
       setGraphNodes(nodesCopy);
     }
   }
