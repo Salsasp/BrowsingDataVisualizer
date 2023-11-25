@@ -7,13 +7,7 @@ export default function NavBar() {
 	       <Link href="/" className="text-white text-bold mx-2">Home</Link>
 	     </li>
 	     <li>
-	       <Link href="#" className="text-white text=bold mx-2">Profile</Link>
-	     </li>
-	     <li>
-	       <Link href="#" className="text-white text=bold mx-2">Personal Stats</Link>
-	     </li>
-	     <li>
-	       <Link href="#" className="text-white text=bold mx-2">Global Stats</Link>
+	       <Link href="/login" className="text-white text=bold mx-2">Profile</Link>
 	     </li>
 	   </ul>
 	 </nav>
