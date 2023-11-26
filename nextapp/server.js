@@ -80,7 +80,7 @@ app.prepare().then(() => {
   //Used to send data from the browser extension to the server
   //Don't ever 'login' just check username and password every time data is sent
   server.post('/newData', async (req, res) => {
-    const { username, browsingData } = req.body;
+    const { username, password, browsingData } = req.body;
     try {
       const user = await User.findOne({ where: { username, password } });
       if (user) {

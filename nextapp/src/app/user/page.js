@@ -14,7 +14,7 @@ function Test() {
 
 
 export default function Page() {
-  return <User >
+  return <User isRedirect={true}>
 	   <Test />
 	 </User>;
 }

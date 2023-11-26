@@ -3,7 +3,7 @@ import { useState, useEffect, createContext } from 'react'
 
 export const UserContext = createContext(null);
 
-export default function User({isRedirect=true, children}) {
+export default function User({show=true, isRedirect=false, children}) {
 
   
 
@@ -24,8 +24,6 @@ export default function User({isRedirect=true, children}) {
   const user = cookies.user ? JSON.parse(cookies.user) : null;
   const browsingData = cookies.browsingData ? JSON.parse(cookies.browsingData) : null;
 
-  console.log(user);
-
   if (!user && isRedirect) {
     redirect('/login')
   }
@@ -33,11 +31,12 @@ export default function User({isRedirect=true, children}) {
 
   let toReturn = null;
 
-  if (user) {
+  if (show && user || !show && !user) {
     toReturn = <UserContext.Provider value={user}>
 		 {children}
  	       </UserContext.Provider>;
-  }
+  } 
+
   
   return toReturn;
 }
