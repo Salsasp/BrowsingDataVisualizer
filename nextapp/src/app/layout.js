@@ -12,7 +12,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className="bg-white h-screen">
 	<NavBar />
-	{children}
+	<div className=" h-full w-full">
+	  {children}
+	</div>
       </body>
     </html>
   )

@@ -70,7 +70,7 @@ app.prepare().then(() => {
       let browsingData = {};
       const newUser = await User.create({ username, password, browsingData });
       console.log('User created:', newUser.toJSON());
-      res.redirect('/login');
+      res.redirect('/user');
     } catch (error) {
       console.error('An error occurred:', error);
       res.status(500).send('An error occurred');

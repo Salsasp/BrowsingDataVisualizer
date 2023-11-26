@@ -1,22 +1,31 @@
 export default function Page() {
-    return (<>
-    <center>
-        <h1 style = {{ color: 'Green', fontSize: '40px' }}>Login</h1>
-        <form action="/login" method="post">
-            <input type="text" name="username" placeholder="Username" />
-            <br />
-            <input type="password" name="password" placeholder="Password" />
-            <br />
-            <input type="submit" value="Submit" />
-        </form>
-        <h1 style = {{ color: 'Green', fontSize: '40px' }}>Register</h1>
-        <form action="/register" method="post">
-            <input type="text" name="username" placeholder="Username" />
-            <br />
-            <input type="password" name="password" placeholder="Password" />
-            <br />
-            <input type="submit" value="Submit" />
-        </form>
-    </center>     
-    </>);
+
+  const formClass = "flex flex-col items-center";
+  const submitClass = "rounded border shadow px-2 my-1 hover:bg-lime-100";
+  const fieldClass = "rounded border shadow my-1 mx-1";
+
+
+  
+  return (
+    <div className="flex flex-row justify-center w-full h-full">
+	    <div className="shadow border rounded w-1/3 h-1/2 p-1 my-4 flex flex-col items-center">
+              <h1 style = {{ color: 'Green', fontSize: '40px' }}>Login</h1>
+              <form className={formClass} action="/login" method="post">
+		<input className={fieldClass} type="text" name="username" placeholder="Username" />
+		<br />
+		<input className={fieldClass} type="password" name="password" placeholder="Password" />
+		<br />
+		<input className={submitClass} type="submit" value="Submit" />
+              </form>
+              <h1 style = {{ color: 'Green', fontSize: '40px' }}>Register</h1>
+              <form className={formClass} action="/register" method="post">
+		<input className={fieldClass} type="text" name="username" placeholder="Username" />
+		<br />
+		<input className={fieldClass} type="password" name="password" placeholder="Password" />
+		<br />
+		<input className={submitClass} type="submit" value="Submit" />
+              </form>
+	    </div>
+      </div>
+	  );
 }
