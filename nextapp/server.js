@@ -96,6 +96,21 @@ app.prepare().then(() => {
     }
   });
 
+
+  server.get('/globalData', async (req, res) => {
+
+    try {
+      const users = await User.findAll();
+
+      res.send({users})
+
+    } catch (error) {
+      console.error('An error occurred:', error);
+      res.status(500).send('An error occurred');
+    }
+
+  })
+  
   server.get('/userData', async (req, res) => {
 
     const { username } = req.body;
@@ -111,6 +126,12 @@ app.prepare().then(() => {
     }
 
   })
+
+  server.get('/test', (req, res) => {
+    res.send('test');
+  })
+
+  
   server.get('*', (req, res) => {
     return handle(req, res);
   });
