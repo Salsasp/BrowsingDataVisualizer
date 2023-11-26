@@ -235,7 +235,6 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
 
 	for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
-	  console.log(connNode, !foundNodes[connNode])
 	  if (!foundNodes[connNode]) {
 	    foundNodes[connNode] = true;
 	    setConnectedNodes(tempNodes[connNode], foundNodes);
