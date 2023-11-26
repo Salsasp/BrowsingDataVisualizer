@@ -129,11 +129,8 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       
       if (graphNodes) {
 
-	
 	for (const [node, values] of Object.entries(graphNodes)) {
-
-
-	  if (node != activeNode) {
+	  if (node !== activeNode) {
 	    // Update position
 
 	    const newX = values.x + values.vel.x;
@@ -172,9 +169,7 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 	      values.vel.y = values.vel.y > 0 ? maxVel : -1 * maxVel;
 	    }
 
-	    console.log("velX:", values.vel.x, "velY:", values.vel.y);
 	    nodesCopy[node] = values;
-
 	  }
 	}
 
@@ -210,7 +205,9 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 
       for (const link of links) {
 	if (link.source === node || link.target === node) {
-	  connectedNodes[links.source === node ? link.target : link.source] = true;
+
+	  const connNode = link.source === node ? link.target : link.source;
+	  connectedNodes[connNode] = true;
 	}
       }
       
@@ -221,44 +218,44 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       xsum += x;
       ysum += y;
       
-      tempNodes[node] = {x: x, y: y, radius: 20, connectedNodes};
+      tempNodes[node] = {x: x, y: y, vel: {x: 0, y: 0}, radius: 20, connectedNodes};
     }
 
 
     const setConnectedNodes = (node, foundNodes) => {
 
-      let foundAllNodes = true;
 
-      let unsearchNodes = [];
+      
+      // Add immediately connected nodes
+      for (const [connNode, _] of Object.entries(node.connectedNodes)) {
+	foundNodes[connNode] = true;
+      }
 
-      // Check to see if all nodes have been found
-      for (const foundNode of foundNodes) {
-	if (!node.connectedNodes[foundNode]) {
-	  foundAllNodes = false;
-	  unsearchedNodes.push(foundNode);
+      // search through connected nodes
+      for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
+
+	for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
+	  console.log(connNode, !foundNodes[connNode])
+	  if (!foundNodes[connNode]) {
+	    foundNodes[connNode] = true;
+	    setConnectedNodes(tempNodes[connNode], foundNodes);
+	  }
 	}
+
       }
-
-      if (foundAllNodes) {
-	return;
-      }
-
-      for (const node of unsearchedNodes) {
-
-	Object.entries(node.connectedNodes).map(connectedNode => {
-	  foundNodes[connectedNode] = true;
-	  getConnectedNodes(tempNode[connectedNode], foundNodes);
-	})
-      }
-
+      
       node.connectedNodes = foundNodes;
     };
     // Connect all nodes
-    for (const node of tempNodes) {
-      setConnectedNodes(node);
+    for (const [node, _] of Object.entries(tempNodes)) {
+      const allConnections = {};
+      allConnections[node] = true;
+      setConnectedNodes(tempNodes[node], allConnections);
+
+      tempNodes[node]["connectedNodes"] = allConnections;
     }
     // Update nodes
-      setGraphNodes(tempNodes);
+    setGraphNodes(tempNodes);
 
     
   }, [])
@@ -294,7 +291,6 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       nodesCopy[activeNode].vel.x = e.movementX;
       nodesCopy[activeNode].vel.y = e.movementY;
 
-      console.log("Mouse Movement: ", e.movementX, e.movementY);
       
       const deltaX = nodesCopy[activeNode].x + e.movementX;
       const deltaY = nodesCopy[activeNode].y + e.movementY;
@@ -309,10 +305,12 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
       // Velocity scalar. Higher = faster nodes;
       const velScalar = 4;
 
-      
-      // Set velocities of other nodes
-      for (const [node, values] of Object.entries(nodesCopy)) {
 
+      // Set velocities of other nodes
+      for (const [node, _] of Object.entries(graphNodes[activeNode]["connectedNodes"])) {
+
+	const values = graphNodes[node];
+	
 	if (node != activeNode) {
 
 	  const velVectorLength = Math.hypot(nodesCopy[activeNode].vel.x + nodesCopy[activeNode].vel.y);
@@ -334,7 +332,6 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 	  const movingTowardsX = (nodesCopy[node].x - nodesCopy[activeNode].x) * unitVelX > 0;
 	  const movingTowardsY = (nodesCopy[node].y - nodesCopy[activeNode].y) * unitVelY > 0;
 
-	  console.log("Moving X:", movingTowardsX, "Moving Y:", movingTowardsY);
 
 	  let velX = velScalar;
 	  let velY = velScalar;
@@ -365,12 +362,6 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 	  values.vel.x += unitVelX * velX / physicsTick + randomX;
 	  values.vel.y += unitVelY * velY / physicsTick + randomY;
 
-	  // Cap the maximum velocity
-
-	  
-	  
-
-	  
 
 	  nodesCopy[node] = values;
 	}
