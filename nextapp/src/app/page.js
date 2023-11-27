@@ -19,8 +19,9 @@ export default function Home() {
 	})
   }, [])
 
-  return <div className="flex flex-col items-center mt-10">
+  return <div className="flex flex-col items-center my-4 py-4 w-full">
+	   <h1 className="font-bold text-xl mt-4">Global Browsing Data</h1>
 	   {data && data.nodesArray && <Graph nodes={data.nodesArray} links={data.linksArray} setInfoNode={setInfoNode}/>}
-	   	   <h1 className="text-bold text-lg mt-4">{infoNode}</h1>
+	   	   <h1 className="font-bold text-xl mt-4">{infoNode}</h1>
 	 </div>;
 }

@@ -5,10 +5,16 @@ const nodeColor = '#00FF1B';
 const lineColor = '#000000'
 
 // SVG element for a node
-function Node({x, y, radius = 10, setActive, setHover, unsetHover}) {
+function Node({x, y, radius = 10, name, setActive, setHover, unsetHover}) {
 
+
+  <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' />
   return (
-    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' onMouseDown={setActive} onMouseEnter={setHover} onMouseLeave={unsetHover}/>
+    <g>
+      
+      <image href={'https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=' + name} x={x - 8} y={y - 8} />
+      <circle opacity={"0.0"} r={radius} cy={y} cx={x} onMouseDown={setActive} onMouseEnter={setHover} onMouseLeave={unsetHover} />
+      </g>
   )
 }
 
@@ -20,6 +26,7 @@ function NodeList({nodes, nodeOnTop = null, setActive, setHover = () => {}, unse
 
   // Iterate through the nodes, creating a svg element for each
   const nodeList = Object.entries(nodes).map(([nodeName, nodeObject]) => <Node key={nodeName}
+									       name={nodeName}
 									       x={nodeObject.x}
 									       y={nodeObject.y}
 									       url={nodeObject.url}
@@ -90,7 +97,7 @@ function getNumLinks(nodeName, links) {
  * @parma height - Optional parameter for the height of the svg
  * @param setInfoNode - Optional function that takes one parameter and is given the node that is currently being hovered over or dragged
  */
-export default function Graph({nodes, links, setInfoNode = () => {}, width = 400, height = 500}) {
+export default function Graph({nodes, links, setInfoNode = () => {}, width = 800, height = 600}) {
 
 
   // Node that is currently being dragged

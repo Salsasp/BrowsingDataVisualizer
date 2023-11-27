@@ -15,7 +15,7 @@ export default function Page() {
   
   useEffect(() => {
 
-    const username = getCookie('user');
+    const username = getCookie('user').replace(/"+/g, '');
     setUser(username);
 
     if (!username) {
@@ -35,7 +35,8 @@ export default function Page() {
   }, [])
 
   return <div className="flex flex-col items-center mt-10">
+	   <h1 className="font-bold text-xl mt-4">{user}'s Browsing Data</h1>
 	   {data && <Graph nodes={data.nodesArray} links={data.linksArray} setInfoNode={setInfoNode}/>}
-	   	   <h1 className="text-bold text-lg mt-4">{infoNode}</h1>
+	   	   <h1 className="font-bold text-xl mt-4">{infoNode}</h1>
 	 </div>;
 }
