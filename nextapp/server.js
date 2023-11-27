@@ -9,8 +9,8 @@ const handle = app.getRequestHandler();
 //Database
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('users', 'user', 'Web_acc825', {
-  host: 'ec2-18-118-217-236.us-east-2.compute.amazonaws.com',
+const sequelize = new Sequelize('users', 'root', 'Mark_LC123', {
+  host: 'localhost',
   dialect: 'mysql'
 });
 
@@ -20,7 +20,7 @@ const User = sequelize.define('user', {
   browsingData: Sequelize.JSON
 });
 
-//sequelize.sync()
+sequelize.sync()
 
 const cookieParser = require('cookie-parser');
 
