@@ -1,4 +1,5 @@
 var switchEnabled = false;
+var password, username;
 
 chrome.storage.local.get(['switchEnabled'], function(result) {
     switchEnabled = result.switchEnabled;
@@ -25,3 +26,12 @@ document.getElementById("switch").addEventListener("click", function(){
     chrome.runtime.sendMessage({switchEnabled: switchEnabled});
     //communicate with background.js to start/stop the timer
 });
+
+if (document.getElementById("submitButton")){
+    document.getElementById("submitButton").addEventListener("click", function(){
+        username = document.getElementById("username").value;
+        password = document.getElementById("password").value;
+        console.log(username);
+        console.log(password);
+    });
+}
