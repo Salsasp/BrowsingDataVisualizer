@@ -9,7 +9,7 @@ const handle = app.getRequestHandler();
 //Database
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('users', 'root', 'mark', {
+const sequelize = new Sequelize('users', 'root', 'Mark_LC123', {
   host: 'localhost',
   dialect: 'mysql'
 });
