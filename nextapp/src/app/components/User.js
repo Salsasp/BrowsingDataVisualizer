@@ -1,33 +1,24 @@
+"use client"
+
 import { redirect } from 'next/navigation'
 import { useState, useEffect, createContext } from 'react'
+import {getCookie} from 'cookies-next'
 
 export const UserContext = createContext(null);
 
 export default function User({show=true, isRedirect=false, children}) {
 
-  
 
-  function getCookies() {
-    const cookieString = document.cookie;
-    const cookieArray = cookieString.split('; ');
-    const cookieObject = {};
+  const user  = getCookie('user');
 
-    cookieArray.forEach(cookie => {
-      const [name, value] = cookie.split('=');
-      cookieObject[name] = decodeURIComponent(value);
-    });
-
-    return cookieObject;
-  }
-
-  const cookies = getCookies();
-  const user = cookies.user ? JSON.parse(cookies.user) : null;
-  const browsingData = cookies.browsingData ? JSON.parse(cookies.browsingData) : null;
 
   if (!user && isRedirect) {
     redirect('/login')
   }
 
+
+  console.log(user)
+  
 
   let toReturn = null;
 
