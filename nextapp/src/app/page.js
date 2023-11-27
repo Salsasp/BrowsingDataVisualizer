@@ -6,7 +6,7 @@ import {useState} from 'react'
 export default function Home() {
 
   const nodes = ["first", "second", "third", "fourth", "fifth"];
-  const links = [{source: "first", target: "second"}, {source: "second", target: "third"}, {source: "fourth", target: "fifth"}, {source: "first", target: "fifth"}, {source: "second", target: "first"}];
+  const links = [{source: "first", target: "second"}, {source: "second", target: "third"}, {source: "fourth", target: "fifth"}, {source: "first", target: "fifth"}, {source: "second", target: "first"}, {source: "third", target: "fourth"} ];
 
   const [infoNode, setInfoNode] = useState(null);
   return (
