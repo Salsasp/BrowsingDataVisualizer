@@ -1,20 +1,25 @@
 //USER PAGE
 "use client";
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect} from 'react';
 import { redirect } from 'next/navigation'
+import {getCookie} from 'cookies-next'
 import User, { UserContext } from '@/components/User'
 
 
-function Test() {
-
-  const user = useContext(UserContext);
-  
-  return <div>{user}</div>
-}
 
 
 export default function Page() {
-  return <User isRedirect={true}>
-	   <Test />
-	 </User>;
+
+  const [user, setUser] = useState(null);
+  
+  
+  useEffect(() => {
+    setUser(getCookie('user'))
+
+    if (!getCookie('user')) {
+      redirect('/login');
+    }
+  })
+
+  
 }
