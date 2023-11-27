@@ -10,7 +10,7 @@ const handle = app.getRequestHandler();
 const Sequelize = require('sequelize');
 
 const sequelize = new Sequelize('users', 'user', 'Web_acc825', {
-  host: 'localhost',
+  host: 'ec2-18-118-217-236.us-east-2.compute.amazonaws.com',
   dialect: 'mysql'
 });
 
