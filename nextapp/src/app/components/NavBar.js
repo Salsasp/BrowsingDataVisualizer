@@ -1,7 +1,6 @@
 "use client"
 
 import Link from "next/link"
-import User from "@/components/User"
 import {deleteCookie, getCookie} from 'cookies-next'
 import {useState, useEffect} from 'react'
 

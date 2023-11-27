@@ -379,20 +379,18 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // Set hovered node 
   const nodeEnter = nodeName => {
     setHoveredNode(nodeName);
-    setInfoNode(nodeName);
+    setInfoNode(activeNode || nodeName);
   }
 
   // Unset hovered node 
   const nodeLeave = () => {
     setHoveredNode(null);
-    setInfoNode(activeNode);
   }
 
   // Deactivate dragging if the mouse leaves the canvas
   const canvasLeave = () => {
     if (!hoveredNode) {
       setActiveNode(null);
-      setInfoNode(null);
     }
   }
 
