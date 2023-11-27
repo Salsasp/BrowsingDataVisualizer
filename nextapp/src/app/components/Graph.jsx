@@ -5,10 +5,16 @@ const nodeColor = '#00FF1B';
 const lineColor = '#000000'
 
 // SVG element for a node
-function Node({x, y, radius = 10, setActive, setHover, unsetHover}) {
+function Node({x, y, radius = 10, name, setActive, setHover, unsetHover}) {
 
+
+  <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' />
   return (
-    <circle cx={x} cy={y} r={radius} fill={nodeColor} stroke={lineColor} strokeWidth='0.5%' onMouseDown={setActive} onMouseEnter={setHover} onMouseLeave={unsetHover}/>
+    <g>
+      
+      <image href={'https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=' + name} x={x - 8} y={y - 8} />
+      <circle opacity={"0.0"} r={radius} cy={y} cx={x} onMouseDown={setActive} onMouseEnter={setHover} onMouseLeave={unsetHover} />
+      </g>
   )
 }
 
@@ -20,6 +26,7 @@ function NodeList({nodes, nodeOnTop = null, setActive, setHover = () => {}, unse
 
   // Iterate through the nodes, creating a svg element for each
   const nodeList = Object.entries(nodes).map(([nodeName, nodeObject]) => <Node key={nodeName}
+									       name={nodeName}
 									       x={nodeObject.x}
 									       y={nodeObject.y}
 									       url={nodeObject.url}
@@ -44,7 +51,7 @@ function NodeList({nodes, nodeOnTop = null, setActive, setHover = () => {}, unse
     const node = nodeList[nodeIndex];
     // delete node from list
     nodeList.splice(nodeIndex, 1);
-      
+    
     // put it at the front
     nodeList.push(node);
   }
@@ -90,7 +97,7 @@ function getNumLinks(nodeName, links) {
  * @parma height - Optional parameter for the height of the svg
  * @param setInfoNode - Optional function that takes one parameter and is given the node that is currently being hovered over or dragged
  */
-export default function Graph({nodes, links, setInfoNode = () => {}, width = 400, height = 500}) {
+export default function Graph({nodes, links, setInfoNode = () => {}, width = 800, height = 600}) {
 
 
   // Node that is currently being dragged
@@ -187,76 +194,73 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 
   // Do a one time setup to place nodes
   useEffect(() => {
-    // Place nodes
-
-      // Used for finding center of graph
-    let xsum = 0;
-    let ysum = 0;
-
-
-    // inner padding when placing nodes initially
-    const sidePadding = width * .2;
-    const topPadding = height * .2;
-
-    for (const node of nodes) {
-
-      // Nodes that have an immediate connection with this node
-      const connectedNodes = {}
-
-      for (const link of links) {
-	if (link.source === node || link.target === node) {
-
-	  const connNode = link.source === node ? link.target : link.source;
-	  connectedNodes[connNode] = true;
-	}
-      }
-      
-      // Randomly assign position
-      const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
-      const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
-
-      xsum += x;
-      ysum += y;
-      
-      tempNodes[node] = {x: x, y: y, vel: {x: 0, y: 0}, radius: 20, connectedNodes};
-    }
-
-
-    const setConnectedNodes = (node, foundNodes) => {
-
-
-      
-      // Add immediately connected nodes
-      for (const [connNode, _] of Object.entries(node.connectedNodes)) {
-	foundNodes[connNode] = true;
-      }
-
-      // search through connected nodes
-      for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
-
-	for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
-	  if (!foundNodes[connNode]) {
-	    foundNodes[connNode] = true;
-	    setConnectedNodes(tempNodes[connNode], foundNodes);
-	  }
-	}
-
-      }
-      
-      node.connectedNodes = foundNodes;
-    };
-    // Connect all nodes
-    for (const [node, _] of Object.entries(tempNodes)) {
-      const allConnections = {};
-      allConnections[node] = true;
-      setConnectedNodes(tempNodes[node], allConnections);
-
-      tempNodes[node]["connectedNodes"] = allConnections;
-    }
-    // Update nodes
-    setGraphNodes(tempNodes);
 
     
+    // Place nodes
+
+    if (nodes) {
+
+      // inner padding when placing nodes initially
+      const sidePadding = width * .2;
+      const topPadding = height * .2;
+
+      for (const node of nodes) {
+
+	// Nodes that have an immediate connection with this node
+	const connectedNodes = {}
+
+	for (const link of links) {
+	  if (link.source === node || link.target === node) {
+
+	    const connNode = link.source === node ? link.target : link.source;
+	    connectedNodes[connNode] = true;
+	  }
+	}
+	
+	// Randomly assign position
+	const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
+	const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
+
+	
+	tempNodes[node] = {x: x, y: y, vel: {x: 0, y: 0}, radius: 20, connectedNodes};
+      }
+
+
+      const setConnectedNodes = (node, foundNodes) => {
+
+
+	
+	// Add immediately connected nodes
+	for (const [connNode, _] of Object.entries(node.connectedNodes)) {
+	  foundNodes[connNode] = true;
+	}
+
+	// search through connected nodes
+	for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
+
+	  for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
+	    if (!foundNodes[connNode]) {
+	      foundNodes[connNode] = true;
+	      setConnectedNodes(tempNodes[connNode], foundNodes);
+	    }
+	  }
+
+	}
+	
+	node.connectedNodes = foundNodes;
+      };
+      // Connect all nodes
+      for (const [node, _] of Object.entries(tempNodes)) {
+	const allConnections = {};
+	allConnections[node] = true;
+	setConnectedNodes(tempNodes[node], allConnections);
+
+	tempNodes[node]["connectedNodes"] = allConnections;
+      }
+      // Update nodes
+      setGraphNodes(tempNodes);
+
+    }    
   }, [])
 
 
@@ -379,34 +383,32 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
   // Set hovered node 
   const nodeEnter = nodeName => {
     setHoveredNode(nodeName);
-    setInfoNode(nodeName);
+    setInfoNode(activeNode || nodeName);
   }
 
   // Unset hovered node 
   const nodeLeave = () => {
     setHoveredNode(null);
-    setInfoNode(activeNode);
   }
 
   // Deactivate dragging if the mouse leaves the canvas
   const canvasLeave = () => {
     if (!hoveredNode) {
       setActiveNode(null);
-      setInfoNode(null);
     }
   }
 
 
   
   return (
-    <div id="Graph" >
+    <div id="Graph">
       <svg className="rounded shadow"viewBox={'0 0 ' + width + ' ' + height} width={width} height={height} onMouseMove={mouseMoved} onMouseUp={mouseUp} onMouseLeave={canvasLeave} >
 	
 	<rect width={width} height={height} fill={backgroundFill} />
 	
 	{links && graphNodes && links.map((link, i) => <Link key={i}
-					       source={graphNodes[link.source]}
-					       target={graphNodes[link.target]} />)}
+							     source={graphNodes[link.source]}
+							     target={graphNodes[link.target]} />)}
 
 	
 	{graphNodes && <NodeList nodes={graphNodes} links={links} nodeOnTop={activeNode} setActive={setActiveNode} setHover={nodeEnter} unsetHover={nodeLeave}/>}
