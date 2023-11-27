@@ -20,7 +20,7 @@ const User = sequelize.define('user', {
   browsingData: Sequelize.JSON
 });
 
-sequelize.sync()
+//sequelize.sync()
 
 const cookieParser = require('cookie-parser');
 
