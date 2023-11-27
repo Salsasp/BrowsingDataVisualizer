@@ -9,7 +9,7 @@ const handle = app.getRequestHandler();
 //Database
 const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize('users', 'root', 'mark', {
+const sequelize = new Sequelize('users', 'root', 'Mark_LC123', {
   host: 'localhost',
   dialect: 'mysql'
 });
@@ -54,7 +54,7 @@ app.prepare().then(() => {
       res.status(500).send('An error occurred');
     }
     
-  });
+});
 
   //Used to create a new user
   server.post('/register', async (req, res) => {
@@ -70,7 +70,7 @@ app.prepare().then(() => {
       let browsingData = {};
       const newUser = await User.create({ username, password, browsingData });
       console.log('User created:', newUser.toJSON());
-      res.redirect('/login');
+      res.redirect('/user');
     } catch (error) {
       console.error('An error occurred:', error);
       res.status(500).send('An error occurred');
@@ -80,7 +80,7 @@ app.prepare().then(() => {
   //Used to send data from the browser extension to the server
   //Don't ever 'login' just check username and password every time data is sent
   server.post('/newData', async (req, res) => {
-    const { username, browsingData } = req.body;
+    const { username, password, browsingData } = req.body;
     try {
       const user = await User.findOne({ where: { username, password } });
       if (user) {
@@ -100,9 +100,22 @@ app.prepare().then(() => {
   server.get('/globalData', async (req, res) => {
 
     try {
-      const users = await User.findAll();
+      const users = await User.findAll({attributes: ['browsingData']});
 
-      res.send({users})
+      const nodes = [];
+      const links = [];
+      
+      for (const user of users) {
+
+	const nodesArray = user.dataValues.browsingData.nodesArray;
+	const linksArray = user.dataValues.browsingData.linksArray;
+
+	console.log(nodesArray, linksArray);
+	nodesArray.map(node => nodes.push(node));
+	linksArray.map(link => links.push(link));
+      }
+      
+      res.send({nodesArray: nodes, linksArray: links})
 
     } catch (error) {
       console.error('An error occurred:', error);
@@ -113,10 +126,11 @@ app.prepare().then(() => {
   
   server.get('/userData', async (req, res) => {
 
-    const { username } = req.body;
+
+    const username = req.query.user.replace(/"+/g, '');
 
     try {
-      const user = await User.findOne({ where: { username }})
+      const user = await User.findOne({ where: { username: username}})
       if (user) {
 	res.send(user.browsingData);
       }
@@ -127,17 +141,14 @@ app.prepare().then(() => {
 
   })
 
-  server.get('/test', (req, res) => {
-    res.send('test');
-  })
 
   
   server.get('*', (req, res) => {
     return handle(req, res);
   });
 
-  server.listen(5000, (err) => {
+  server.listen(8080, (err) => {
     if (err) throw err;
-    console.log('> Ready on http://localhost:5000');
+    console.log('> Ready on http://localhost:8080');
   });
 });
