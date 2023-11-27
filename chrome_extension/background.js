@@ -39,13 +39,25 @@ chrome.runtime.onMessage.addListener(function(message){
             processedNodes[i].setNumVisits(visitCounter);
         }
 
-        processedNodes.forEach(function(node) {
-            const jsonString = JSON.stringify(node);
-            console.log(jsonString);
-        });
+        let nodes = [];
+        let links = [];
+        for (i = 0; i < processedNodes.length; i++)
+        {
+            nodes.push(processedNodes[i].url)
+            for (j = 0; j < processedNodes[i].nextUrls.length; j++)
+            {
+                links.push({source: processedNodes[i].url, target: processedNodes[i].nextUrls[j]})
+            }
+        }
 
         urlNodes.length = 0; //clear urlNodes
         processedNodes.length = 0; //clear processedNodes
+
+        let packagedData = {
+            nodesArray: nodes,
+            linksArray: links
+        }
+        
     }
 });
 
