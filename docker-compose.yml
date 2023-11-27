@@ -9,7 +9,7 @@ services:
     ports:
       - 3306:3306
     environment:
-      MYSQL_ROOT_PASSWORD: mark
+      MYSQL_ROOT_PASSWORD: Mark_LC123
       MYSQL_DATABASE: users
 
   adminer:
