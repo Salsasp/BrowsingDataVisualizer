@@ -1,24 +1,26 @@
 "use client"
 
-import BrowsingGraph from './components/Graph'
-import {useState} from 'react'
-
+import Graph from './components/Graph'
+import {useState, useEffect} from 'react'
+import {getCookie} from 'cookies-next'
+import axios from 'axios'
 export default function Home() {
 
-  const nodes = ["first", "second", "third", "fourth", "fifth"];
-  const links = [{source: "first", target: "second"}, {source: "second", target: "third"}, {source: "fourth", target: "fifth"}, {source: "first", target: "fifth"}, {source: "second", target: "first"}, {source: "third", target: "fourth"} ];
-
+  const [user, setUser] = useState(null);
+  const [data, setData] = useState(null);
   const [infoNode, setInfoNode] = useState(null);
-  return (
-    <div className="flex flex-col items-center">
+  
+  useEffect(() => {
 
-      <div className="w-1/2 p-5 flex flex-row items-center">
-	<BrowsingGraph nodes={nodes} links={links} setInfoNode={setInfoNode}/>
+      axios.get('/globalData')
+	.then((res) => {
+	  setData(res.data)
+	  console.log(res.data)
+	})
+  }, [])
 
-	{infoNode && <p className="mx-4 text-xl font-bold">
-		       Current node: {infoNode}
-		     </p>}
-      </div>
-    </div>
-  )
+  return <div className="flex flex-col items-center mt-10">
+	   {data && data.nodesArray && <Graph nodes={data.nodesArray} links={data.linksArray} setInfoNode={setInfoNode}/>}
+	   	   <h1 className="text-bold text-lg mt-4">{infoNode}</h1>
+	 </div>;
 }

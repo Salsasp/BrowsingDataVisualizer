@@ -100,9 +100,22 @@ app.prepare().then(() => {
   server.get('/globalData', async (req, res) => {
 
     try {
-      const users = await User.findAll();
+      const users = await User.findAll({attributes: ['browsingData']});
 
-      res.send({users})
+      const nodes = [];
+      const links = [];
+      
+      for (const user of users) {
+
+	const nodesArray = user.dataValues.browsingData.nodesArray;
+	const linksArray = user.dataValues.browsingData.linksArray;
+
+	console.log(nodesArray, linksArray);
+	nodesArray.map(node => nodes.push(node));
+	linksArray.map(link => links.push(link));
+      }
+      
+      res.send({nodesArray: nodes, linksArray: links})
 
     } catch (error) {
       console.error('An error occurred:', error);
@@ -136,6 +149,6 @@ app.prepare().then(() => {
 
   server.listen(5000, (err) => {
     if (err) throw err;
-    console.log('> Ready on http://localhost:8080');
+    console.log('> Ready on http://localhost:5000');
   });
 });

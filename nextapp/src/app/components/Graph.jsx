@@ -44,7 +44,7 @@ function NodeList({nodes, nodeOnTop = null, setActive, setHover = () => {}, unse
     const node = nodeList[nodeIndex];
     // delete node from list
     nodeList.splice(nodeIndex, 1);
-      
+    
     // put it at the front
     nodeList.push(node);
   }
@@ -187,76 +187,73 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 
   // Do a one time setup to place nodes
   useEffect(() => {
-    // Place nodes
-
-      // Used for finding center of graph
-    let xsum = 0;
-    let ysum = 0;
-
-
-    // inner padding when placing nodes initially
-    const sidePadding = width * .2;
-    const topPadding = height * .2;
-
-    for (const node of nodes) {
-
-      // Nodes that have an immediate connection with this node
-      const connectedNodes = {}
-
-      for (const link of links) {
-	if (link.source === node || link.target === node) {
-
-	  const connNode = link.source === node ? link.target : link.source;
-	  connectedNodes[connNode] = true;
-	}
-      }
-      
-      // Randomly assign position
-      const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
-      const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
-
-      xsum += x;
-      ysum += y;
-      
-      tempNodes[node] = {x: x, y: y, vel: {x: 0, y: 0}, radius: 20, connectedNodes};
-    }
-
-
-    const setConnectedNodes = (node, foundNodes) => {
-
-
-      
-      // Add immediately connected nodes
-      for (const [connNode, _] of Object.entries(node.connectedNodes)) {
-	foundNodes[connNode] = true;
-      }
-
-      // search through connected nodes
-      for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
-
-	for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
-	  if (!foundNodes[connNode]) {
-	    foundNodes[connNode] = true;
-	    setConnectedNodes(tempNodes[connNode], foundNodes);
-	  }
-	}
-
-      }
-      
-      node.connectedNodes = foundNodes;
-    };
-    // Connect all nodes
-    for (const [node, _] of Object.entries(tempNodes)) {
-      const allConnections = {};
-      allConnections[node] = true;
-      setConnectedNodes(tempNodes[node], allConnections);
-
-      tempNodes[node]["connectedNodes"] = allConnections;
-    }
-    // Update nodes
-    setGraphNodes(tempNodes);
 
     
+    // Place nodes
+
+    if (nodes) {
+
+      // inner padding when placing nodes initially
+      const sidePadding = width * .2;
+      const topPadding = height * .2;
+
+      for (const node of nodes) {
+
+	// Nodes that have an immediate connection with this node
+	const connectedNodes = {}
+
+	for (const link of links) {
+	  if (link.source === node || link.target === node) {
+
+	    const connNode = link.source === node ? link.target : link.source;
+	    connectedNodes[connNode] = true;
+	  }
+	}
+	
+	// Randomly assign position
+	const x = Math.ceil(Math.random() * (width - 2 * sidePadding)) + sidePadding;
+	const y = Math.ceil(Math.random() * (height - 2 * topPadding)) + topPadding;
+
+	
+	tempNodes[node] = {x: x, y: y, vel: {x: 0, y: 0}, radius: 20, connectedNodes};
+      }
+
+
+      const setConnectedNodes = (node, foundNodes) => {
+
+
+	
+	// Add immediately connected nodes
+	for (const [connNode, _] of Object.entries(node.connectedNodes)) {
+	  foundNodes[connNode] = true;
+	}
+
+	// search through connected nodes
+	for (const [adjNode, _] of Object.entries(node.connectedNodes)) {
+
+	  for (const [connNode, _] of Object.entries(tempNodes[adjNode]["connectedNodes"])) {
+	    if (!foundNodes[connNode]) {
+	      foundNodes[connNode] = true;
+	      setConnectedNodes(tempNodes[connNode], foundNodes);
+	    }
+	  }
+
+	}
+	
+	node.connectedNodes = foundNodes;
+      };
+      // Connect all nodes
+      for (const [node, _] of Object.entries(tempNodes)) {
+	const allConnections = {};
+	allConnections[node] = true;
+	setConnectedNodes(tempNodes[node], allConnections);
+
+	tempNodes[node]["connectedNodes"] = allConnections;
+      }
+      // Update nodes
+      setGraphNodes(tempNodes);
+
+    }    
   }, [])
 
 
@@ -397,14 +394,14 @@ export default function Graph({nodes, links, setInfoNode = () => {}, width = 400
 
   
   return (
-    <div id="Graph" >
+    <div id="Graph">
       <svg className="rounded shadow"viewBox={'0 0 ' + width + ' ' + height} width={width} height={height} onMouseMove={mouseMoved} onMouseUp={mouseUp} onMouseLeave={canvasLeave} >
 	
 	<rect width={width} height={height} fill={backgroundFill} />
 	
 	{links && graphNodes && links.map((link, i) => <Link key={i}
-					       source={graphNodes[link.source]}
-					       target={graphNodes[link.target]} />)}
+							     source={graphNodes[link.source]}
+							     target={graphNodes[link.target]} />)}
 
 	
 	{graphNodes && <NodeList nodes={graphNodes} links={links} nodeOnTop={activeNode} setActive={setActiveNode} setHover={nodeEnter} unsetHover={nodeLeave}/>}

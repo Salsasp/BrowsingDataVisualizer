@@ -34,8 +34,8 @@ export default function Page() {
     }
   }, [])
 
-  return <div>
+  return <div className="flex flex-col items-center mt-10">
 	   {data && <Graph nodes={data.nodesArray} links={data.linksArray} setInfoNode={setInfoNode}/>}
-	   <p>{infoNode}</p>
+	   	   <h1 className="text-bold text-lg mt-4">{infoNode}</h1>
 	 </div>;
 }
